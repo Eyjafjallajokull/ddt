@@ -2,8 +2,7 @@ from functools import wraps
 
 __version__ = '0.2.0'
 
-MAGIC = '%values'  # this value cannot conflict with any real python attribute
-
+VALUES_ATTRIBUTE_NAME = '%values'  # this value cannot conflict with any real python attribute
 
 def data(*values):
     """
@@ -12,10 +11,20 @@ def data(*values):
     Should be added to methods of instances of ``unittest.TestCase``.
     """
     def wrapper(func):
-        setattr(func, MAGIC, values)
+        setattr(func, VALUES_ATTRIBUTE_NAME, values)
         return func
     return wrapper
 
+def data_provider(provider, *args):
+    """
+    Method decorator to add to your test methods.
+
+    Should be added to methods of instances of ``unittest.TestCase``.
+    """
+    def wrapper(func):
+        setattr(func, VALUES_ATTRIBUTE_NAME, provider(*args))
+        return func
+    return wrapper
 
 def ddt(cls):
     """
@@ -42,9 +51,9 @@ def ddt(cls):
         return wrapper
 
     for name, f in cls.__dict__.items():
-        if hasattr(f, MAGIC):
+        if hasattr(f, VALUES_ATTRIBUTE_NAME):
             i = 0
-            for v in getattr(f, MAGIC):
+            for v in getattr(f, VALUES_ATTRIBUTE_NAME):
                 test_name = getattr(v, "__name__", "{0}_{1}".format(name, v))
                 setattr(cls, test_name, feed_data(f, v))
                 i = i + 1
